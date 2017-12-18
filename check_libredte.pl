@@ -24,7 +24,7 @@
 #
 # Comando para monitorear LibreDTE (estadísticas) usando Nagios
 # @author Esteban De La Fuente Rubio, DeLaF (esteban[at]sasco.cl)
-# @version 2017-02-20
+# @version 2017-12-18
 #
 
 use strict;
@@ -67,10 +67,38 @@ my $result = $rest->GET($url);
 $np->plugin_exit(CRITICAL, $result->responseContent()) if $result->responseCode() != 200;
 my $stats = decode_json($result->responseContent());
 
-# entregar mensaje con resultado
+# armar mensaje con resultado de estadística
+my $status = OK;
 my $msg = 'contribuyentes: '.format_number($stats->{contribuyentes_sii}).
           ' / usuarios: '.format_number($stats->{usuarios_registrados}).
           ' / empresas: '.format_number($stats->{empresas_registradas}).
           ' / emitidos: '.format_number($stats->{documentos_emitidos}).
           ($certificacion?' [C]':' [P]');
-$np->plugin_exit(OK, $msg);
+
+# comparar version
+if ($stats->{version}) {
+    my $version = $stats->{version}->{libredte};
+    if ($version != 0) {
+        # obtener commits de la aplicación web (para comparar con versión)
+        $result = $rest->GET('https://api.github.com/repos/LibreDTE/libredte-webapp/commits');
+        $np->plugin_exit(CRITICAL, $result->responseContent()) if $result->responseCode() != 200;
+        my @commits = decode_json($result->responseContent());
+        my $last_commit = $commits[0][0]->{sha};
+        # verificar si la versión corresponde a la última disponible en el repositorio de GitHUB
+        my $version_id = $version->{id};
+        if ($version_id ne $last_commit) {
+            $status = WARNING;
+            my $version_id_short = substr($version_id, 0, 7);
+            my $version_date = substr($version->{date}, 0, 10);
+            my $last_commit_short = substr($last_commit, 0, 7);
+            my $last_commit_date = substr($commits[0][0]->{commit}->{author}->{date}, 0, 10);
+            $msg .= ' / version: '.$version_id_short.' ('.$version_date.') != '.$last_commit_short.' ('.$last_commit_date.')';
+        }
+    }
+} else {
+    $status = WARNING;
+    $msg .= ' / version: no disponible';
+}
+
+# entregar mensaje con resultado
+$np->plugin_exit($status, $msg);

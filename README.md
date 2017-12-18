@@ -1,9 +1,10 @@
 LibreDTE Nagios Plugin
 ======================
 
-Comando para monitorear LibreDTE (estadísticas) desde Nagios.
+Comando para monitorear LibreDTE (estadísticas) desde Nagios. También permite
+conocer si la aplicación está actualizada a la última versión disponible.
 
-Comando bajo licencia AGPL.
+Comando bajo licencia [AGPL](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
 Instalar dependencias:
 
@@ -26,3 +27,9 @@ Agregar servicio al host en nagios:
         service_description     LibreDTE
         check_command           check_libredte!https:\/\/dte.example.com
     }
+
+Estados que se entregan:
+
+- OK: se obtuvo estadística y está actualizada la aplicación.
+- WARNING: versión de LibreDTE no corresponde a la última disponible.
+- CRITICAL: no fue posible obtener estadísticas o la última versión de LibreDTE.
