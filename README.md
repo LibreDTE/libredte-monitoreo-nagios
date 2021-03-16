@@ -10,7 +10,7 @@ Instalar dependencias:
 
     # cpan Monitoring::Plugin REST::Client JSON Number::Format
 
-Copiar el comando en el directorio de comandos de nagios ($USER1$).
+Copiar el comando en el directorio de comandos de nagios (`$USER1$` definido en `resource.cfg`, ejemplo: `/usr/local/nagios/libexec`).
 
 Agregar el comando en nagios:
 
